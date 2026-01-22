@@ -1,0 +1,26 @@
+{
+  "feature_columns": [
+    "Pregnancies",
+    "Glucose",
+    "BloodPressure",
+    "SkinThickness",
+    "Insulin",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "Age"
+  ],
+  "target_column": "Outcome",
+  "categorical_columns": [],
+  "numerical_columns": [
+    "Pregnancies",
+    "Glucose",
+    "BloodPressure",
+    "SkinThickness",
+    "Insulin",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "Age"
+  ],
+  "algorithm": "knn",
+  "scaler_path": "/app/models/project_2/scaler_87.pkl"
+}

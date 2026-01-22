@@ -1,0 +1,34 @@
+{
+  "feature_columns": [
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "AScore",
+    "Cscore",
+    "Impulsive",
+    "SS"
+  ],
+  "target_column": "Ketamine",
+  "categorical_columns": [],
+  "numerical_columns": [
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "AScore",
+    "Cscore",
+    "Impulsive",
+    "SS"
+  ],
+  "algorithm": "knn",
+  "scaler_path": "/app/models/project_1/scaler_110.pkl"
+}

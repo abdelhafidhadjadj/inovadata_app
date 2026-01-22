@@ -1,0 +1,34 @@
+{
+  "feature_columns": [
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "Cscore",
+    "AScore",
+    "Impulsive",
+    "SS"
+  ],
+  "target_column": "Alcohol",
+  "categorical_columns": [],
+  "numerical_columns": [
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "Cscore",
+    "AScore",
+    "Impulsive",
+    "SS"
+  ],
+  "algorithm": "neural_network",
+  "scaler_path": "/app/models/project_2/scaler_86.pkl"
+}

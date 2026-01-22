@@ -17,12 +17,24 @@
   let numericalColumns = $derived(
     columns.filter(col => col.data_type === 'numerical')
   );
+  
+  let allSelected = $derived(
+    numericalColumns.length > 0 && selectedColumns.length === numericalColumns.length
+  );
 
   function toggleColumn(columnName: string) {
     if (selectedColumns.includes(columnName)) {
       selectedColumns = selectedColumns.filter(c => c !== columnName);
     } else {
       selectedColumns = [...selectedColumns, columnName];
+    }
+  }
+  
+  function toggleSelectAll() {
+    if (allSelected) {
+      selectedColumns = [];
+    } else {
+      selectedColumns = numericalColumns.map(col => col.name);
     }
   }
   
@@ -112,13 +124,10 @@
       const result = await response.json();
       console.log('✅ Normalization result:', result);
       
-      // ✅ CORRECTION : Ne pas recharger la page, juste afficher un message
       alert(result.message);
       
-      // ✅ Appeler onTransform pour notifier le parent
       onTransform();
       
-      // ✅ Reset les sélections
       selectedColumns = [];
       showPreview = false;
       previewData = null;
@@ -132,7 +141,6 @@
   }
 </script>
 
-<!-- Le reste du template reste identique -->
 <div class="card space-y-6">
   <div>
     <h3 class="text-lg font-semibold mb-2">Normalization</h3>
@@ -204,27 +212,49 @@
   {/if}
   
   <div>
-    <label class="block text-sm font-medium text-gray-700 mb-2">
-      Select Numerical Columns ({selectedColumns.length} selected)
-    </label>
-    <div class="border border-gray-200 rounded max-h-64 overflow-y-auto">
-      {#each numericalColumns as column}
-        <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
-          <input
-            type="checkbox"
-            checked={selectedColumns.includes(column.name)}
-            onchange={() => toggleColumn(column.name)}
-            class="mr-3"
-          />
-          <div class="flex-1">
-            <div class="font-medium">{column.name}</div>
-            <div class="text-xs text-gray-500">
-              Range: [{column.statistics?.min?.toFixed(2)}, {column.statistics?.max?.toFixed(2)}]
-            </div>
-          </div>
-        </label>
-      {/each}
+    <div class="flex items-center justify-between mb-2">
+      <label class="text-sm font-medium text-gray-700">
+        Select Numerical Columns ({selectedColumns.length} selected)
+      </label>
+      {#if numericalColumns.length > 0}
+        <button
+          type="button"
+          onclick={toggleSelectAll}
+          class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+        >
+          {allSelected ? 'Deselect All' : 'Select All'}
+        </button>
+      {/if}
     </div>
+    
+    {#if numericalColumns.length === 0}
+      <div class="border border-gray-200 rounded p-6 text-center text-gray-500">
+        <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <p>No numerical columns found in this dataset</p>
+        <p class="text-sm mt-1">Numerical columns are required for normalization</p>
+      </div>
+    {:else}
+      <div class="border border-gray-200 rounded max-h-64 overflow-y-auto">
+        {#each numericalColumns as column}
+          <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+            <input
+              type="checkbox"
+              checked={selectedColumns.includes(column.name)}
+              onchange={() => toggleColumn(column.name)}
+              class="mr-3 rounded border-gray-300"
+            />
+            <div class="flex-1">
+              <div class="font-medium text-gray-900">{column.name}</div>
+              <div class="text-xs text-gray-500">
+                Range: [{column.statistics?.min?.toFixed(2)}, {column.statistics?.max?.toFixed(2)}]
+              </div>
+            </div>
+          </label>
+        {/each}
+      </div>
+    {/if}
   </div>
   
   {#if showPreview && previewData}
@@ -266,7 +296,7 @@
       <input
         type="checkbox"
         bind:checked={createNewVersion}
-        class="mr-2"
+        class="mr-2 rounded border-gray-300"
       />
       <span class="text-sm">Create new version (recommended)</span>
     </label>
@@ -280,16 +310,28 @@
       type="button"
       onclick={handlePreview}
       disabled={isLoading || selectedColumns.length === 0}
-      class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      class="btn-secondary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
     >
+      {#if isLoading}
+        <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      {/if}
       {isLoading ? 'Loading...' : 'Preview'}
     </button>
     <button
       type="button"
       onclick={handleApply}
       disabled={isLoading || selectedColumns.length === 0}
-      class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      class="btn-primary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
     >
+      {#if isLoading}
+        <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      {/if}
       {isLoading ? 'Applying...' : 'Apply Normalization'}
     </button>
   </div>

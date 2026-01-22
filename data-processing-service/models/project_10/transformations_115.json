@@ -1,0 +1,36 @@
+{
+  "feature_columns": [
+    "Heroin",
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "AScore",
+    "Cscore",
+    "Impulsive",
+    "SS"
+  ],
+  "target_column": "Heroin",
+  "categorical_columns": [],
+  "numerical_columns": [
+    "Heroin",
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "AScore",
+    "Cscore",
+    "Impulsive",
+    "SS"
+  ],
+  "algorithm": "naive_bayes",
+  "scaler_path": "/app/models/project_10/scaler_115.pkl"
+}

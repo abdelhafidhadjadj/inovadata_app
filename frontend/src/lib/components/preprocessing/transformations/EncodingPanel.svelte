@@ -6,7 +6,7 @@
   } = $props();
   
   let selectedColumns = $state<string[]>([]);
-  let method = $state<'label_encoding' | 'onehot_encoding'>('label_encoding');  // ✅ Correction des noms
+  let method = $state<'label_encoding' | 'onehot_encoding'>('label_encoding');
   let dropFirst = $state(false);
   let isLoading = $state(false);
   let previewData = $state<any>(null);
@@ -16,11 +16,23 @@
     columns.filter(col => col.data_type === 'categorical')
   );
   
+  let allSelected = $derived(
+    categoricalColumns.length > 0 && selectedColumns.length === categoricalColumns.length
+  );
+  
   function toggleColumn(columnName: string) {
     if (selectedColumns.includes(columnName)) {
       selectedColumns = selectedColumns.filter(c => c !== columnName);
     } else {
       selectedColumns = [...selectedColumns, columnName];
+    }
+  }
+  
+  function toggleSelectAll() {
+    if (allSelected) {
+      selectedColumns = [];
+    } else {
+      selectedColumns = categoricalColumns.map(col => col.name);
     }
   }
   
@@ -76,8 +88,8 @@
       formData.append('columns', JSON.stringify(selectedColumns));
       formData.append('method', method);
       formData.append('drop_first', dropFirst.toString());
-      formData.append('dataset_id', dataset.id.toString());  // ✅ Ajouté
-      formData.append('create_new_version', 'true');  // ✅ Ajouté
+      formData.append('dataset_id', dataset.id.toString());
+      formData.append('create_new_version', 'true');
       
       console.log('📤 Sending encoding request:', {
         file_path: dataset.file_path,
@@ -104,7 +116,6 @@
       
       alert(result.message);
       
-      // ✅ Recharger après succès
       await new Promise(resolve => setTimeout(resolve, 500));
       onTransform();
       
@@ -169,9 +180,20 @@
   
   <!-- Column Selection -->
   <div>
-    <label class="block text-sm font-medium text-gray-700 mb-2">
-      Select Categorical Columns ({selectedColumns.length} selected)
-    </label>
+    <div class="flex items-center justify-between mb-2">
+      <label class="text-sm font-medium text-gray-700">
+        Select Categorical Columns ({selectedColumns.length} selected)
+      </label>
+      {#if categoricalColumns.length > 0}
+        <button
+          type="button"
+          onclick={toggleSelectAll}
+          class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+        >
+          {allSelected ? 'Deselect All' : 'Select All'}
+        </button>
+      {/if}
+    </div>
     
     {#if categoricalColumns.length === 0}
       <div class="border border-gray-200 rounded p-6 text-center text-gray-500">

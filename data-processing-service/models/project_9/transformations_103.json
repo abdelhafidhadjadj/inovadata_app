@@ -1,0 +1,34 @@
+{
+  "feature_columns": [
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "AScore",
+    "SS",
+    "Impulsive",
+    "Cscore"
+  ],
+  "target_column": "Semer",
+  "categorical_columns": [],
+  "numerical_columns": [
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "AScore",
+    "SS",
+    "Impulsive",
+    "Cscore"
+  ],
+  "algorithm": "neural_network",
+  "scaler_path": "/app/models/project_9/scaler_103.pkl"
+}

@@ -1,7 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
-import { db } from '$lib/server/db';
 
 export const load: PageServerLoad = async ({ locals }) => {
   // Redirect if already logged in
@@ -14,58 +13,85 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
   default: async ({ request, cookies }) => {
     const formData = await request.formData();
-    const usernameOrEmail = formData.get('username')?.toString();
+    const fullName = formData.get('full_name')?.toString() || undefined;
+    const username = formData.get('username')?.toString();
+    const email = formData.get('email')?.toString();
     const password = formData.get('password')?.toString();
+    const confirmPassword = formData.get('confirm_password')?.toString();
 
     // Validation
-    if (!usernameOrEmail || !password) {
+    if (!username || !email || !password || !confirmPassword) {
       return fail(400, {
-        error: 'Username/email and password are required',
-        username: usernameOrEmail
+        error: 'Username, email, and password are required',
+        username,
+        email,
+        fullName
+      });
+    }
+
+    // Check password match
+    if (password !== confirmPassword) {
+      return fail(400, {
+        error: 'Passwords do not match',
+        username,
+        email,
+        fullName
+      });
+    }
+
+    // Validate username format
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return fail(400, {
+        error: 'Username can only contain letters, numbers, and underscores',
+        username,
+        email,
+        fullName
+      });
+    }
+
+    // Validate username length
+    if (username.length < 3) {
+      return fail(400, {
+        error: 'Username must be at least 3 characters long',
+        username,
+        email,
+        fullName
+      });
+    }
+
+    // Validate password length
+    if (password.length < 8) {
+      return fail(400, {
+        error: 'Password must be at least 8 characters long',
+        username,
+        email,
+        fullName
       });
     }
 
     try {
-      // Find user
-      const user = await auth.findUser(usernameOrEmail);
-      
-      if (!user) {
-        return fail(401, {
-          error: 'Invalid username/email or password',
-          username: usernameOrEmail
+      // Check if username exists
+      const existingUser = await auth.findUser(username);
+      if (existingUser) {
+        return fail(400, {
+          error: 'Username already taken',
+          email,
+          fullName
         });
       }
 
-      // Get password hash
-      const result = await db.query(
-        'SELECT password_hash FROM users WHERE id = $1',
-        [user.id]
-      );
-
-      if (result.rows.length === 0) {
-        return fail(401, {
-          error: 'Invalid username/email or password',
-          username: usernameOrEmail
+      // Check if email exists
+      const existingEmail = await auth.findUser(email);
+      if (existingEmail) {
+        return fail(400, {
+          error: 'Email already registered',
+          username,
+          fullName
         });
       }
 
-      // Verify password
-      const isValid = await auth.verifyPassword(password, result.rows[0].password_hash);
-
-      if (!isValid) {
-        return fail(401, {
-          error: 'Invalid username/email or password',
-          username: usernameOrEmail
-        });
-      }
-
-      // Check if user is active
-      if (!user.is_active) {
-        return fail(403, {
-          error: 'Your account has been deactivated',
-          username: usernameOrEmail
-        });
-      }
+      // Create user (this handles password hashing internally)
+      const user = await auth.createUser(username, email, password, fullName);
 
       // Create session
       const sessionId = await auth.createSession(user.id);
@@ -83,17 +109,19 @@ export const actions: Actions = {
       throw redirect(303, '/dashboard');
       
     } catch (error: any) {
-      // IMPORTANT: Re-throw redirects immediately, don't log them
+      // Re-throw redirects
       if (error?.status === 303 || error?.status === 302 || error?.status === 301) {
         throw error;
       }
 
-      // Only log actual errors
-      console.error('Login error:', error);
+      // Log actual errors
+      console.error('Registration error:', error);
       
       return fail(500, {
-        error: 'An error occurred during login',
-        username: usernameOrEmail
+        error: 'An error occurred during registration. Please try again.',
+        username,
+        email,
+        fullName
       });
     }
   }

@@ -68,25 +68,25 @@ export const actions: Actions = {
   },
 
   deleteProject: async ({ locals, params }) => {
-    if (!locals.user) {
-      return fail(401, { error: 'Unauthorized' });
+  if (!locals.user) {
+    return fail(401, { error: 'Unauthorized' });
+  }
+
+  const projectId = parseInt(params.id);
+
+  try {
+    const success = await projects.delete(projectId, locals.user.id);
+    if (!success) {
+      return fail(403, { error: 'Permission denied' });
     }
+  } catch (err) {
+    console.error('Delete project error:', err);
+    return fail(500, { error: 'Failed to delete project' });
+  }
 
-    const projectId = parseInt(params.id);
-
-    try {
-      const success = await projects.delete(projectId, locals.user.id);
-      if (!success) {
-        return fail(403, { error: 'Permission denied' });
-      }
-
-      throw redirect(303, '/dashboard');
-    } catch (err) {
-      if (err instanceof Response) throw err;
-      console.error('Delete project error:', err);
-      return fail(500, { error: 'Failed to delete project' });
-    }
-  },
+  // Redirect happens outside try-catch (cleaner)
+  throw redirect(303, '/dashboard');
+},
 
   addMember: async ({ request, locals, params }) => {
     if (!locals.user) {

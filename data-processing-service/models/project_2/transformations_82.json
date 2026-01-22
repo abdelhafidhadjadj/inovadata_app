@@ -1,0 +1,34 @@
+{
+  "feature_columns": [
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "AScore",
+    "Cscore",
+    "SS",
+    "Impulsive"
+  ],
+  "target_column": "Cannabis",
+  "categorical_columns": [],
+  "numerical_columns": [
+    "Age",
+    "Gender",
+    "Education",
+    "Country",
+    "Ethnicity",
+    "Nscore",
+    "Escore",
+    "Oscore",
+    "AScore",
+    "Cscore",
+    "SS",
+    "Impulsive"
+  ],
+  "algorithm": "naive_bayes",
+  "scaler_path": "/app/models/project_2/scaler_82.pkl"
+}

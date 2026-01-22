@@ -18,7 +18,7 @@
 	let targetColumn = '';
 	let selectedFeatures: string[] = [];
 	let trainRatio = 0.8;
-	let randomSeed = 42;
+	let randomSeed = 100;
 	let hyperparameters: any = {};
 
 	let loading = true;

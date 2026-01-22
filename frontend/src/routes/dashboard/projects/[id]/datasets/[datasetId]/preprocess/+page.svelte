@@ -157,12 +157,13 @@
       const response = await fetch('?/fillMissing', { method: 'POST', body: form });
       const result = await response.json();
       
-      if (result.type === 'success') {
-        // ✅ CORRECTION
+      console.log('Replace outliers result:', result);
+      
+      if (result.type === 'success' || (result.data && result.data.success)) {
         await new Promise(resolve => setTimeout(resolve, 500));
         window.location.reload();
       } else {
-        alert('Error: ' + (result.data?.error || 'Failed to replace outliers'));
+        alert('Error: ' + (result.data?.error || result.error || 'Failed to replace outliers'));
         fillLoading = false;
       }
     } catch (error) {
@@ -201,52 +202,56 @@
       const response = await fetch('?/fillMissing', { method: 'POST', body: form });
       const result = await response.json();
       
-      if (result.type === 'success') {
-        // ✅ CORRECTION
+      console.log('Remove outliers result:', result);
+      
+      if (result.type === 'success' || (result.data && result.data.success)) {
         await new Promise(resolve => setTimeout(resolve, 500));
         window.location.reload();
       } else {
-        alert('Error: ' + (result.data?.error || 'Failed'));
+        alert('Error: ' + (result.data?.error || result.error || 'Failed to remove outliers'));
         fillLoading = false;
       }
     } catch (error) {
-      alert('Failed');
+      console.error('Remove outliers error:', error);
+      alert('Failed to remove outliers');
       fillLoading = false;
     }
   }
   
-  async function fillMissingValues() {
-    if (!selectedColumn || selectedColumn.total_missing_count === 0) return;
+async function fillMissingValues() {
+  if (!selectedColumn || selectedColumn.total_missing_count === 0) return;
+  
+  const strategy = selectedReplacementMethod[selectedColumn.name] || 'mean';
+  const action = `fill_${strategy}`;
+  
+  fillLoading = true;
+  const form = new FormData();
+  form.append('column_name', selectedColumn.name);
+  form.append('action', action);
+  
+  if (customMissingValues[selectedColumn.name]) {
+    form.append('custom_missing', customMissingValues[selectedColumn.name]);
+  }
+  
+  try {
+    const response = await fetch('?/fillMissing', { method: 'POST', body: form });
+    const result = await response.json();
     
-    const strategy = selectedReplacementMethod[selectedColumn.name] || 'mean';
-    const action = `fill_${strategy}`;
+    console.log('Fill missing result:', result);
     
-    fillLoading = true;
-    const form = new FormData();
-    form.append('column_name', selectedColumn.name);
-    form.append('action', action);
-    
-    if (customMissingValues[selectedColumn.name]) {
-      form.append('custom_missing', customMissingValues[selectedColumn.name]);
-    }
-    
-    try {
-      const response = await fetch('?/fillMissing', { method: 'POST', body: form });
-      const result = await response.json();
-      
-      if (result.type === 'success') {
-        // ✅ CORRECTION
-        await new Promise(resolve => setTimeout(resolve, 500));
-        window.location.reload();
-      } else {
-        alert('Error: ' + (result.data?.error || 'Failed'));
-        fillLoading = false;
-      }
-    } catch (error) {
-      alert('Failed');
+    if (result.type === 'success' || (result.data && result.data.success)) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      window.location.reload();
+    } else {
+      alert('Error: ' + (result.data?.error || result.error || 'Failed to fill missing values'));
       fillLoading = false;
     }
+  } catch (error) {
+    console.error('Fill error:', error);
+    alert('Failed to fill missing values');
+    fillLoading = false;
   }
+}
   
   async function forwardFill() {
     if (!selectedColumn) return;
@@ -264,16 +269,18 @@
       const response = await fetch('?/fillMissing', { method: 'POST', body: form });
       const result = await response.json();
       
-      if (result.type === 'success') {
-        // ✅ CORRECTION
+      console.log('Forward fill result:', result);
+      
+      if (result.type === 'success' || (result.data && result.data.success)) {
         await new Promise(resolve => setTimeout(resolve, 500));
         window.location.reload();
       } else {
-        alert('Error');
+        alert('Error: ' + (result.data?.error || result.error || 'Failed to forward fill'));
         fillLoading = false;
       }
     } catch (error) {
-      alert('Failed');
+      console.error('Forward fill error:', error);
+      alert('Failed to forward fill');
       fillLoading = false;
     }
   }
@@ -296,16 +303,18 @@
       const response = await fetch('?/fillMissing', { method: 'POST', body: form });
       const result = await response.json();
       
-      if (result.type === 'success') {
-        // ✅ CORRECTION
+      console.log('Remove rows result:', result);
+      
+      if (result.type === 'success' || (result.data && result.data.success)) {
         await new Promise(resolve => setTimeout(resolve, 500));
         window.location.reload();
       } else {
-        alert('Error');
+        alert('Error: ' + (result.data?.error || result.error || 'Failed to remove rows'));
         fillLoading = false;
       }
     } catch (error) {
-      alert('Failed');
+      console.error('Remove rows error:', error);
+      alert('Failed to remove rows');
       fillLoading = false;
     }
   }

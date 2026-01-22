@@ -143,14 +143,51 @@ export const projects = {
   },
 
   // Delete project
-  delete: async (projectId: number, userId: number): Promise<boolean> => {
+delete: async (projectId: number, userId: number): Promise<boolean> => {
+  try {
     // Check if user is owner
     const hasPermission = await projects.hasPermission(projectId, userId, ['owner']);
     if (!hasPermission) return false;
 
-    await db.query('DELETE FROM projects WHERE id = $1', [projectId]);
-    return true;
-  },
+    // Use transaction to ensure all deletions succeed or none do
+    return await db.transaction(async (client) => {
+      // 1. Delete activity logs first (they reference the project)
+      await client.query(
+        'DELETE FROM activity_logs WHERE project_id = $1',
+        [projectId]
+      );
+
+      // 2. Delete experiments (if not already cascade deleted)
+      await client.query(
+        'DELETE FROM experiments WHERE project_id = $1',
+        [projectId]
+      );
+
+      // 3. Delete datasets (if not already cascade deleted)
+      await client.query(
+        'DELETE FROM datasets WHERE project_id = $1',
+        [projectId]
+      );
+
+      // 4. Delete project members
+      await client.query(
+        'DELETE FROM project_members WHERE project_id = $1',
+        [projectId]
+      );
+
+      // 5. Finally delete the project
+      await client.query(
+        'DELETE FROM projects WHERE id = $1',
+        [projectId]
+      );
+
+      return true;
+    });
+  } catch (error) {
+    console.error('Database query error:', error);
+    throw error;
+  }
+},
 
   // Check user permission
   hasPermission: async (

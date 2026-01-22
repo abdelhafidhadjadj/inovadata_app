@@ -87,7 +87,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
         body: JSON.stringify({
           file_path: dataset.file_path,
           file_format: dataset.file_format,
-          limit: 1000, // Limiter à 1000 points pour performance
+          limit: 1000,
           offset: 0
         })
       });
@@ -148,25 +148,10 @@ export const actions: Actions = {
       return fail(404, { error: 'Dataset not found' });
     }
 
-    // CORRECTION: Nouvelle logique pour générer le nom de fichier
+    // Générer le chemin de sortie avec versioning
     const timestamp = Date.now();
     const originalPath = dataset.file_path!;
-    
-    // Extraire l'extension
-    const lastDotIndex = originalPath.lastIndexOf('.');
-    const extension = originalPath.substring(lastDotIndex); // .csv, .arff, .json
-    
-    // Extraire le chemin de base (sans l'extension)
-    let basePath = originalPath.substring(0, lastDotIndex);
-    
-    // Si le fichier a déjà une version (_v{timestamp}), la supprimer
-    const versionPattern = /_v\d+$/;
-    if (versionPattern.test(basePath)) {
-      basePath = basePath.replace(versionPattern, '');
-    }
-    
-    // Créer le nouveau chemin
-    const outputPath = `${basePath}_v${timestamp}${extension}`;
+    const outputPath = originalPath.replace(/\.(csv|arff|json)$/, `_v${timestamp}.$1`);
 
     console.log('Original path:', originalPath);
     console.log('Output path:', outputPath);
@@ -202,7 +187,7 @@ export const actions: Actions = {
 
     const preprocessResult = await preprocessResponse.json();
 
-    // Première mise à jour
+    // ✅ CORRECTION: Vérifier que l'utilisateur a accès (owner OU membre)
     const updateResult1 = await db.query(
       `UPDATE datasets d
        SET file_path = $1,
@@ -210,9 +195,10 @@ export const actions: Actions = {
            processing_status = 'pending',
            updated_at = NOW()
        FROM projects p
+       LEFT JOIN project_members pm ON p.id = pm.project_id
        WHERE d.id = $3 
          AND d.project_id = p.id
-         AND p.owner_id = $4
+         AND (p.owner_id = $4 OR pm.user_id = $4)
        RETURNING d.*`,
       [outputPath, preprocessResult.final_rows, datasetId, locals.user.id]
     );
@@ -236,7 +222,7 @@ export const actions: Actions = {
     if (processResponse.ok) {
       const processResult = await processResponse.json();
       
-      // Deuxième mise à jour
+      // ✅ CORRECTION: Même vérification pour la deuxième mise à jour
       await db.query(
         `UPDATE datasets d
          SET columns_info = $1,
@@ -244,9 +230,10 @@ export const actions: Actions = {
              memory_usage = $2,
              updated_at = NOW()
          FROM projects p
+         LEFT JOIN project_members pm ON p.id = pm.project_id
          WHERE d.id = $3
            AND d.project_id = p.id
-           AND p.owner_id = $4`,
+           AND (p.owner_id = $4 OR pm.user_id = $4)`,
         [
           JSON.stringify(processResult.columns),
           processResult.memory_usage,
