@@ -43,7 +43,11 @@ CREATE TABLE project_members (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role VARCHAR(50) DEFAULT 'viewer', -- owner, editor, viewer
     added_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(project_id, user_id)
+    UNIQUE(project_id, user_id),
+    CONSTRAINT project_members_project_id_fkey 
+    FOREIGN KEY (project_id) 
+    REFERENCES projects(id) 
+    ON DELETE CASCADE
 );
 
 -- Table Datasets
@@ -69,6 +73,10 @@ CREATE TABLE datasets (
     created_by INT NOT NULL REFERENCES users(id),
     UNIQUE(project_id, name),
     updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT datasets_project_id_fkey 
+    FOREIGN KEY (project_id) 
+    REFERENCES projects(id) 
+    ON DELETE CASCADE
 );
 
 -- Table Dataset Versions
@@ -80,7 +88,6 @@ CREATE TABLE dataset_versions (
     preprocessing_steps JSONB,
     is_active BOOLEAN DEFAULT TRUE,
     transformations JSONB,
-    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW(),
     created_by INT NOT NULL REFERENCES users(id)
 );
@@ -91,7 +98,10 @@ CREATE TABLE ml_experiments (
     description TEXT,
     project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     dataset_id INT NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
-    
+    transformations_path VARCHAR(500),
+    roc_data JSONB,
+    residuals JSONB,
+    predictions JSONB,
     -- Configuration de l'algorithme
     algorithm VARCHAR(50) NOT NULL,
     hyperparameters JSONB DEFAULT '{}'::jsonb,
@@ -143,12 +153,16 @@ CREATE TABLE activity_logs (
     resource_type VARCHAR(50),
     resource_id INT,
     details JSONB,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT activity_logs_project_id_fkey 
+    FOREIGN KEY (project_id) 
+    REFERENCES projects(id) 
+    ON DELETE CASCADE
 );
 
 -- Indices
 CREATE INDEX idx_projects_owner ON projects(owner_id);
 CREATE INDEX idx_datasets_project ON datasets(project_id);
-CREATE INDEX idx_experiments_project ON experiments(project_id);
+CREATE INDEX idx_experiments_project ON ml_experiments(project_id);
 CREATE INDEX idx_sessions_user ON sessions(user_id);
 CREATE INDEX idx_sessions_expires ON sessions(expires_at);
